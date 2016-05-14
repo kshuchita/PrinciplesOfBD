@@ -1,0 +1,5 @@
+val file=sc.textFile("/home/tarun/Desktop/bigdata/singer.json")
+val word = file.flatMap(_.split(" "))
+val counts_word = word.map(x => (x, 1)).reduceByKey(_ + _)
+counts_word.saveAsTextFile("/home/tarun/Desktop/bigdata")
+
