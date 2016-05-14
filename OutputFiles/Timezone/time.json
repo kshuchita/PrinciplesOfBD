@@ -1,0 +1,17 @@
+[
+	{"time_zone":"Pacific Time (US & Canada)","total_count":1818},
+	{"time_zone":"Brasilia","total_count":514},
+	{"time_zone":"Eastern Time (US & Canada)","total_count":245},
+	{"time_zone":"Santiago","total_count":237},
+	{"time_zone":"Athens","total_count":216},
+	{"time_zone":"Buenos Aires","total_count":211},
+	{"time_zone":"Arizona","total_count":168},
+	{"time_zone":"Central Time (US & Canada)","total_count":143},
+	{"time_zone":"London","total_count":132},
+	{"time_zone":"Amsterdam","total_count":104},
+	{"time_zone":"Atlantic Time (Canada)","total_count":89},
+	{"time_zone":"Mountain Time (US & Canada)","total_count":87},
+	{"time_zone":"Paris","total_count":78},
+	{"time_zone":"Mid-Atlantic","total_count":74},
+	{"time_zone":"Yerevan","total_count":72},
+]
