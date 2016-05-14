@@ -1,0 +1,18 @@
+[
+
+	{"singer":"rihanna","possibly_sensitive":true,"cnt":237},
+	{"singer":"taylorswift","possibly_sensitive":true,"cnt":127},
+	{"singer":"nickiminaj","possibly_sensitive":true,"cnt":98},
+	{"singer":"adele","possibly_sensitive":true,"cnt":93},
+	{"singer":"britneyspears","possibly_sensitive":true,"cnt":84},
+	{"singer":"katyperry","possibly_sensitive":true,"cnt":71},
+	{"singer":"selenagomez","possibly_sensitive":true,"cnt":61},
+	{"singer":"JLo","possibly_sensitive":true,"cnt":45},
+	{"singer":"mileycyrus","possibly_sensitive":true,"cnt":33},
+	{"singer":"brunomars","possibly_sensitive":true,"cnt":19},
+	{"singer":"ladygaga","possibly_sensitive":true,"cnt":17},
+	{"singer":"shakira","possibly_sensitive":true,"cnt":14},
+	{"singer":"justinbeiber","possibly_sensitive":true,"cnt":11},
+	{"singer":"justintimberlake","possibly_sensitive":true,"cnt":10},
+	{"singer":"eminem","possibly_sensitive":true,"cnt":4}
+]

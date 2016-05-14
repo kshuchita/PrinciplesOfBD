@@ -1,0 +1,38 @@
+/*.weatherModule {
+    background:#f2f2f2;
+    height:150px;
+    width:250px;
+    border: 1px dashed #ccc;
+    padding: 1em;
+}
+
+
+.currentConditions {
+    float: left;
+}
+.weatherModule {
+    padding: 1em;
+}
+*/
+.currentIcon {
+    float: left;
+    margin: 0 .75em;
+}
+ul.slideshow {
+  list-style: none;
+  width: 900px;
+  height: 250px;
+  overflow: hidden;
+  position: relative;
+  margin: 20px 0 0 0;}
+  
+ul.slideshow li {
+  position: absolute;
+  margin: 0;
+  padding: 0;
+  left: 0;
+  right: 0;}
+ 
+ul.slideshow li.show {
+  z-index: 500;}
+ 

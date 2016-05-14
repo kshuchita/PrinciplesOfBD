@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <title>Tweet Analayzer</title>
+    <meta content='width=device-width, initial-scale=1' name='viewport'/>
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js" type="text/javascript"></script>
+    <script src="ajaxGetPost.js" type="text/javascript"></script>
+    <script type="text/javascript" src="https://www.google.com/jsapi"></script>
+    <script>
+        function charts(data,ChartType)
+        {
+            var c=ChartType;
+            var jsonData=data;
+            google.load("visualization", "1", {packages:["corechart"], callback: drawVisualization});
+            function drawVisualization()
+            {
+                var data = new google.visualization.DataTable();
+                data.addColumn('string', 'User Lang');
+                data.addColumn('number', 'Sensitive Tweet Count');
+                $.each(jsonData, function(i,jsonData)
+                {
+                    var value=jsonData.cnt;
+                    var name=jsonData.singer;
+                    data.addRows([ [name, value]]);
+                });
+
+                var options = {
+                    title : "Singers' Tweets possibly being Sensitive",
+                    colorAxis: {colors: ['#54C492', '#cc0000']},
+                    datalessRegionColor: '#dedede',
+                    colors: ['#e7711c'],
+                    histogram: { lastBucketPercentile: 5 }
+                };
+
+                var chart;
+                if(c=="ColumnChart")
+                    chart = new google.visualization.ColumnChart(document.getElementById('chart_div'));
+                else if(c=="PieChart")
+                    chart = new google.visualization.PieChart(document.getElementById('piechart_div'));
+                else if(c=="BarChart")
+                    chart = new google.visualization.BarChart(document.getElementById('bar_div'));
+                else if(c=="GeoChart")
+                    chart = new google.visualization.GeoChart(document.getElementById('regions_div'));
+                else if(c="CandleChart")
+                    var chart = new google.visualization.CandlestickChart(document.getElementById('candle_div'));
+
+                chart.draw(data, options);
+
+
+            }
+        }
+
+        $(document).ready(function ()
+        {
+            url='sensitive.json';
+            ajax_data('GET',url, function(data)
+            {
+                charts(data,"ColumnChart");
+                charts(data,"PieChart");
+                charts(data,"BarChart");
+                charts(data,"GeoChart");
+                charts(data,"CandleChart");
+            });
+        });
+    </script>
+    <style>
+        body{font-family:arial}
+    </style>
+</head>
+<body style="text-align:center">
+
+<div id="chart_div" style="width: 900px; height: 500px;"></div>
+    <p style="background-color:white;font-size:15px"> <b>DESCRIPTION: This Histogram chart shows which Singers have tweets which could be possibly sensitive in nature. This will help us analyse what nature of tweets are written about different singers. </b> <br> 
+    <b>QUERY 6:</b> val r10 = sqlContext.sql("SELECT singer , possibly_sensitive,count(*) as cnt FROM tweet_table WHERE possibly_sensitive  GROUP BY singer, possibly_sensitive HAVING singer != '' ORDER BY cnt DESC") <br>
+r10.coalesce(1).write.json("sensitive")   </p>
+
+</body>
+</html>

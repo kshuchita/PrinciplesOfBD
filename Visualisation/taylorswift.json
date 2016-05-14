@@ -1,0 +1,14 @@
+[
+
+	{"singer":"taylorswift","time_zone":"Pacific Time (US & Canada)","_c2":"Wed Nov 2","cnt":1976},
+	{"singer":"taylorswift","time_zone":"Eastern Time (US & Canada)","_c2":"Wed Nov 2","cnt":847},
+	{"singer":"taylorswift","time_zone":"Central Time (US & Canada)","_c2":"Wed Nov 2","cnt":523},
+	{"singer":"taylorswift","time_zone":"Brasilia","_c2":"Wed Nov 2","cnt":368},
+	{"singer":"taylorswift","time_zone":"Sydney","_c2":"Wed Nov 2","cnt":358},
+	{"singer":"taylorswift","time_zone":"Pacific Time (US & Canada)","_c2":"Thu Nov 2","cnt":316},
+	{"singer":"taylorswift","time_zone":"Beijing","_c2":"Wed Nov 2","cnt":259},
+	{"singer":"taylorswift","time_zone":"Atlantic Time (Canada)","_c2":"Wed Nov 2","cnt":248},
+	{"singer":"taylorswift","time_zone":"Jakarta","_c2":"Wed Nov 2","cnt":247},
+	{"singer":"taylorswift","time_zone":"London","_c2":"Wed Nov 2","cnt":229}
+
+]
