@@ -1,0 +1,2015 @@
+
+Source Code:
+________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________
+Code for creating table t1 from input json file containing all tweets:
+./bin/spark-shell
+import sqlContext.implicits._
+val sqlContext = new org.apache.spark.sql.SQLContext(sc)
+val t1 = sqlContext.jsonFile("newtweets.json")	
+t1.registerTempTable("t1")
+
+Code for adding 'singer' column to table t1 and saving as table t2:
+import org.apache.spark.sql.functions._
+val coder: (String => String) = (arg: String) => {if(arg.toLowerCase().contains("taylor")) "taylorswift" else if(arg.toLowerCase().contains("beiber")) "justinbeiber" else if(arg.toLowerCase().contains("colbertlateshow")) "justinbeiber" else if(arg.toLowerCase().contains("timberlake")) "justintimberlake" else if(arg.toLowerCase().contains("katy")) "katyperry" else if(arg.toLowerCase().contains("jlo")) "JLo"  else if(arg.toLowerCase().contains("nickiminaj")) "nickiminaj" else if(arg.toLowerCase().contains("mileycyrus")) "mileycyrus" else if(arg.toLowerCase().contains("eminem")) "eminem" else if(arg.toLowerCase().contains("bruno")) "brunomars" else if(arg.toLowerCase().contains("shakira")) "shakira" else if(arg.toLowerCase().contains("rihanna")) "rihanna" else if(arg.toLowerCase().contains("britney")) "britneyspears" else if(arg.toLowerCase().contains("gaga")) "ladygaga" else if(arg.toLowerCase().contains("selena")) "selenagomez" else if(arg.toLowerCase().contains("adele")) "adele" else ""}
+val matchsinger = udf(coder)
+val t2 = t1.withColumn("singer", matchsinger(col("text")))
+t2.registerTempTable("t2")
+
+Code for adding 'device' column to table t2 and saving as table tweet_table:
+import org.apache.spark.sql.functions._
+val coder: (String => String) = (arg: String) => {if(arg.toLowerCase().contains("iphone")) "iphone" else if(arg.toLowerCase().contains("android")) "android" else if(arg.toLowerCase().contains("ipad")) "ipad" else if(arg.toLowerCase().contains("web")) "web" else if(arg.toLowerCase().contains("windows")) "windowsphone" else if(arg.toLowerCase().contains("blackberry")) "blackberry" else ""}
+val matchdevice = udf(coder)
+val tweet_table = t2.withColumn("device", matchdevice(col("source")))
+tweet_table.registerTempTable("tweet_table")
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Code for Executing Queries:
+
+DESCRIPTION: This query finds which are most active languages in which users tweet about the singer Taylor Swift. This will let us analyse the popularity based on language for that singer
+QUERY 1: val r1 = sqlContext.sql("SELECT user.lang , COUNT(*) as cnt FROM tweet_table WHERE user.lang IS NOT NULL AND text LIKE '%taylorswift%' GROUP BY user.lang ORDER BY cnt DESC") 
+
+DESCRIPTION: This  query finds the most used devices for tweeting by the twitter users. This will help us predict the device preferences of twitter users
+QUERY 2: val r5 = sqlContext.sql("SELECT device , count(*) as cnt FROM tweet_table WHERE user.verified OR NOT user.verified GROUP BY device HAVING device != '' ORDER BY cnt DESC")
+r5.coalesce(1).write.json("devices") 
+
+DESCRIPTION: This query finds the language distribution of tweets related to music. This will help visualize which lingual section of twitter users are more interested in music.
+QUERY 3: val r8 = sqlContext.sql("SELECT user.lang , COUNT(*) as cnt FROM tweet_table WHERE user.lang IS NOT NULL GROUP BY user.lang ORDER BY cnt DESC LIMIT 15")
+r8.coalesce(1).write.json("all_lang") 
+
+DESCRIPTION: This query finds the top 15 time zones from where users tweeted about singer Nicki Minaj. This will help us analyse the popularity of the singer Nicki Minaj in different time zones.
+QUERY 4: val r4 = sqlContext.sql("SELECT singer, user.time_zone, SUBSTR(created_at, 0, 9),COUNT(*) AS cnt FROM tweet_table WHERE user.time_zone IS NOT NULL AND singer = 'nickiminaj' GROUP BY singer, user.time_zone,SUBSTR(created_at, 0, 9) ORDER BY cnt DESC LIMIT 10")
+r4.coalesce(1).write.json("nm_location")
+
+DESCRIPTION: This query finds the popularity of Singers based on number of tweets for each singer. This will help us visualize which singer is more popular relatively when compared to all others.
+QUERY 5: val r3 = sqlContext.sql("SELECT singer ,count(*) as cnt FROM tweet_table WHERE user.verified OR NOT user.verified GROUP BY singer HAVING singer != '' ORDER BY cnt DESC")
+r3.write.json("popular1")
+
+DESCRIPTION: This query finds which Singers have tweets which could be possibly sensitive in nature. This will help us analyse what nature of tweets are written about different singers.
+QUERY 6: val r10 = sqlContext.sql("SELECT singer , possibly_sensitive,count(*) as cnt FROM tweet_table WHERE possibly_sensitive GROUP BY singer, possibly_sensitive HAVING singer != '' ORDER BY cnt DESC")
+r10.coalesce(1).write.json("sensitive")
+
+DESCRIPTION: This query finds the top 15 most active regions based on number of tweets from these regions. This will help us analyse what geographic regions are active on twitter.
+QUERY 7:val r2 = sqlContext.sql("SELECT user.time_zone, SUBSTR(created_at, 0, 9), COUNT(*) AS total_count FROM tweet_table WHERE user.time_zone IS NOT NULL GROUP BY user.time_zone, SUBSTR(created_at, 0, 9) ORDER BY total_count DESC LIMIT 15") 
+r2.coalesce(1).write.json("timezone")
+
+DESCRIPTION: This query finds which tweets were retweeted the most showing most popular tweets on twitter from the total retweeted count of each tweet. This will help us analyse which tweets are most popular from the time when it was first tweeted.
+QUERY 8:val r6 = sqlContext.sql("SELECT COUNT(*), text as cnt FROM tweet_table GROUP BY text ORDER BY cnt DESC LIMIT 6")
+r6.coalesce(1).write.json("toptweets")
+
+DESCRIPTION: This query finds the top 15 time zones from where users tweeted about singer Taylor Swift (Second most popular singer). This will help us analyse the popularity of the singer Taylor Swift in different time zones.
+QUERY 9: val r4 = sqlContext.sql("SELECT singer, user.time_zone, SUBSTR(created_at, 0, 9),COUNT(*) AS cnt FROM tweet_table WHERE user.time_zone IS NOT NULL AND singer = 'taylorswift' GROUP BY singer, user.time_zone,SUBSTR(created_at, 0, 9) ORDER BY cnt DESC LIMIT 10") 
+r4.coalesce(1).write.json("ts_location")
+
+DESCRIPTION: This query finds which tweets were most repeatedly tweeted during a period of time. This will help us analyse short term popularity of a tweet on twitter.
+QUERY 10: val r6 = sqlContext.sql("SELECT COUNT(*), text as cnt FROM tweet_table GROUP BY text ORDER BY cnt DESC LIMIT 6")
+r6.coalesce(1).write.json("toptweets")
+_____________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________
+
+*************************************************************************************************************************************************************************************************************************************************************************************************************************************************************
+HTML SOURCE CODE
+.............................................................................................................................................................................................................................................................................................................................................................
+function post_ajax_data(url, encodedata, success)
+{
+$.ajax({
+type:"POST",
+url:url,
+data :encodedata,
+dataType:"json",
+restful:true,
+contentType: 'application/json',
+cache:false,
+timeout:20000,
+async:true,
+beforeSend :function(data) { },
+success:function(data){
+success.call(this, data);
+},
+error:function(data){
+alert("Error In Connecting");
+}
+});
+}
+
+//GET and DELETE Ajax
+function ajax_data(type, url, success)
+{
+$.ajax({
+type:type,
+url:url,
+dataType:"json",
+restful:true,
+cache:false,
+timeout:20000,
+async:true,
+beforeSend :function(data) { },
+success:function(data){
+success.call(this, data);
+},
+error:function(data){
+alert("Error In Connecting");
+}
+});
+}[
+
+	{"lang":"en","cnt":9523},
+	{"lang":"es","cnt":966},
+	{"lang":"pt","cnt":773},
+	{"lang":"id","cnt":310},
+	{"lang":"ja","cnt":294},
+	{"lang":"en-gb","cnt":283},
+	{"lang":"it","cnt":143},
+	{"lang":"de","cnt":125},
+	{"lang":"fr","cnt":124},
+	{"lang":"tr","cnt":109},
+	{"lang":"th","cnt":72},
+	{"lang":"en-GB","cnt":58},
+	{"lang":"ar","cnt":55},
+	{"lang":"pl","cnt":40},
+	{"lang":"nl","cnt":23},
+	{"lang":"el","cnt":22},
+	{"lang":"ko","cnt":20},
+	{"lang":"ru","cnt":18},
+	{"lang":"sv","cnt":13},
+	{"lang":"zh-cn","cnt":13},
+	{"lang":"en-AU","cnt":11},
+	{"lang":"hr","cnt":10},
+	{"lang":"zh-CN","cnt":10},
+	{"lang":"vi","cnt":8},
+	{"lang":"fil","cnt":8},
+	{"lang":"fi","cnt":8},
+	{"lang":"zh-tw","cnt":4},
+	{"lang":"zh-Hans","cnt":4},
+	{"lang":"es-MX","cnt":3},
+	{"lang":"he","cnt":3},
+	{"lang":"bg","cnt":3},
+	{"lang":"ca","cnt":3},
+	{"lang":"da","cnt":3},
+	{"lang":"sk","cnt":2},
+	{"lang":"xx-lc","cnt":2},
+	{"lang":"zh-TW","cnt":2},
+	{"lang":"hi","cnt":1},
+	{"lang":"cs","cnt":1}
+]
+<!DOCTYPE html>
+<html lang="" data-ng-app="geolocation">
+<head>
+  <meta t="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mash up Page</title>
+  <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.4.4/angular.min.js" type="application/javascript"></script>
+  <script src="https://maps.googleapis.com/maps/api/js?v=3.exp&sensor=true"></script> 
+    <style>
+	html { 
+  background: url(images/1.jpg) no-repeat center center fixed; 
+  -webkit-background-size: cover;
+  -moz-background-size: cover;
+  -o-background-size: cover;
+  background-size: cover;
+}
+    #map-canvas {
+    width: 400px;
+    height: 300px;
+}
+.input{
+position: absolute;
+left:850px;
+top:200px;
+
+}
+.geo{
+position: absolute;
+left:50px;
+top:110px;
+
+}
+.chart{
+position:absolute;
+left:500px;
+top:220px;
+
+}
+
+table a:link {
+	color: #666;
+	font-weight: bold;
+	text-decoration:none;
+}
+table a:visited {
+	color: #999999;
+	font-weight:bold;
+	text-decoration:none;
+}
+table a:active,
+table a:hover {
+	color: #bd5a35;
+	text-decoration:underline;
+}
+table {
+	font-family:Arial, Helvetica, sans-serif;
+	color:#666;
+	font-size:12px;
+	text-shadow: 1px 1px 0px #fff;
+	background:#eaebec;
+	margin:20px;
+	border:#ccc 1px solid;
+
+	-moz-border-radius:3px;
+	-webkit-border-radius:3px;
+	border-radius:3px;
+
+	-moz-box-shadow: 0 1px 2px #d1d1d1;
+	-webkit-box-shadow: 0 1px 2px #d1d1d1;
+	box-shadow: 0 1px 2px #d1d1d1;
+}
+table th {
+	padding:10px 10px 10px 10px;
+	border-top:1px solid #fafafa;
+	border-bottom:1px solid #e0e0e0;
+
+	background: #ededed;
+	background: -webkit-gradient(linear, left top, left bottom, from(#ededed), to(#ebebeb));
+	background: -moz-linear-gradient(top,  #ededed,  #ebebeb);
+}
+table th:first-child {
+	text-align: left;
+	padding-left:20px;
+}
+table tr:first-child th:first-child {
+	-moz-border-radius-topleft:3px;
+	-webkit-border-top-left-radius:3px;
+	border-top-left-radius:3px;
+}
+table tr:first-child th:last-child {
+	-moz-border-radius-topright:3px;
+	-webkit-border-top-right-radius:3px;
+	border-top-right-radius:3px;
+}
+table tr {
+	text-align: center;
+	padding-left:20px;
+}
+table td:first-child {
+	text-align: left;
+	padding-left:20px;
+	border-left: 0;
+}
+table td {
+	padding:18px;
+	border-top: 1px solid #ffffff;
+	border-bottom:1px solid #e0e0e0;
+	border-left: 1px solid #e0e0e0;
+
+	background: #fafafa;
+	background: -webkit-gradient(linear, left top, left bottom, from(#fbfbfb), to(#fafafa));
+	background: -moz-linear-gradient(top,  #fbfbfb,  #fafafa);
+}
+table tr.even td {
+	background: #f6f6f6;
+	background: -webkit-gradient(linear, left top, left bottom, from(#f8f8f8), to(#f6f6f6));
+	background: -moz-linear-gradient(top,  #f8f8f8,  #f6f6f6);
+}
+table tr:last-child td {
+	border-bottom:0;
+}
+table tr:last-child td:first-child {
+	-moz-border-radius-bottomleft:3px;
+	-webkit-border-bottom-left-radius:3px;
+	border-bottom-left-radius:3px;
+}
+table tr:last-child td:last-child {
+	-moz-border-radius-bottomright:3px;
+	-webkit-border-bottom-right-radius:3px;
+	border-bottom-right-radius:3px;
+}
+table tr:hover td {
+	background: #f2f2f2;
+	background: -webkit-gradient(linear, left top, left bottom, from(#f2f2f2), to(#f0f0f0));
+	background: -moz-linear-gradient(top,  #f2f2f2,  #f0f0f0);	
+	}
+.text1
+{
+color: rgb(0, 89, 0);
+font-size: 25px;
+background-color: rgb(255, 252, 168);
+text-shadow: rgb(255, 252, 168) 2px 2px 0px, rgb(156, 156, 156) 1px 1px 0px;
+}
+
+    </style>
+</head>
+
+<body style="background-image:url("images/1.jpeg")">
+
+<div class="geo" ng-controller="googlemapoutput">
+            <p class="text1" align="center"> <b>Current Location</b></p><br/>
+            <div id="map-canvas"></div>
+        </div>
+		<div>
+			
+		<div>
+
+		<div class="input">
+		<table>
+			<tr>
+				<th><label>Person Name</label></th>
+				<th><labelss>Number Of Times Interacted</label></th>
+			</tr>
+			<tr>
+				<th><input type="text"  ng-model="name" id="type" placeholder="Enter name"/></th>
+				<th><input type="text"  ng-model="value" id="type" placeholder="Enter value"/></th>
+			</tr>
+			<tr>
+				<th><input type="text"  ng-model="name1" id="type" placeholder="Enter name"/></th>
+				<th><input type="text"  ng-model="value1" id="type" placeholder="Enter value"/></th>
+			</tr>
+			<tr>
+				<th><input type="text"  ng-model="name2" id="type" placeholder="Enter name"/></th>
+				<th><input type="text"  ng-model="value2" id="type" placeholder="Enter value"/></th>
+			</tr>
+			<tr>
+				<th><input type="text"  ng-model="name3" id="type" placeholder="Enter name"/></th>
+				<th><input type="text"  ng-model="value3" id="type" placeholder="Enter value"/></th>
+			</tr>
+		</table>
+		<!-- <input type="text"  ng-model="type" id="type" placeholder="Enter type"/><br><br>
+		<input type="text"  ng-model="price" id="type1" placeholder="Enter type1"/><br><br>
+		<input type="text"  ng-model="type1" id="type1" placeholder="Enter type1"/><br><br>
+		<input type="text"  ng-model="price1" id="type1" placeholder="Enter type1"/><br><br> -->
+		<!-- <img src="https://chart.googleapis.com/chart?chs=250x100&chd=t:60,40&cht=p3&chl=Hello|World" height="100" width="500"> -->
+		
+
+		</div>
+		<div class="chart">
+		<img src="https://chart.googleapis.com/chart?chs=400x150&chd=t:{{value}},{{value1}},{{value2}},{{value3}}&cht=p3&chdl={{name}}|{{name1}}|{{name2}}|{{name3}}&chco=0000FF&chtt=Interaction+Pie+Chart&chts=000000,25,c&chdls=000000,20" height="300" width="300">
+		</div>
+		
+    </body>
+</html>
+
+<script>
+var app= angular.module('geolocation', [])
+app.controller('googlemapoutput', function ($scope) {
+	
+	//var name =localStorage.getItem("username");
+  //document.getElementById('label').innerHTML=" "+name;
+    var map;
+    var mapOptions;
+
+    $scope.initialize = function () {
+        navigator.geolocation.getCurrentPosition(function (position) {
+
+            var pos = new google.maps.LatLng(
+            position.coords.latitude,
+            position.coords.longitude);
+
+            var mapOptions = {
+                zoom: 16,
+                center: pos
+            };
+
+            map = new google.maps.Map(document.getElementById('map-canvas'),
+            mapOptions);
+
+            var marker = new google.maps.Marker({
+                position: pos,
+                map: map
+            });
+        });
+    };
+
+    google.maps.event.addDomListener(window, 'load', $scope.initialize);
+
+});
+</script><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" data-ng-app="myApp">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<title>User Home Page</title>
+<link rel="stylesheet" href="style.css" type="text/css" />
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.4.4/angular.min.js" type="application/javascript"></script>  
+  <script src="js/app.js"></script>
+<style>
+.button {
+        border: 1px solid #7d868c;
+        background: #161717;
+        background: -webkit-gradient(linear, left top, left bottom, from(#ffffff), to(#161717));
+        background: -webkit-linear-gradient(top, #ffffff, #161717);
+        background: -moz-linear-gradient(top, #ffffff, #161717);
+        background: -ms-linear-gradient(top, #ffffff, #161717);
+        background: -o-linear-gradient(top, #ffffff, #161717);
+        background-image: -ms-linear-gradient(top, #ffffff 0%, #161717 100%);
+        padding: 14px 28px;
+        -webkit-border-radius: 7px;
+        -moz-border-radius: 7px;
+        border-radius: 7px;
+        -webkit-box-shadow: rgba(255,255,255,0.4) 0 1px 0, inset rgba(255,255,255,0.4) 0 1px 0;
+        -moz-box-shadow: rgba(255,255,255,0.4) 0 1px 0, inset rgba(255,255,255,0.4) 0 1px 0;
+        box-shadow: rgba(255,255,255,0.4) 0 1px 0, inset rgba(255,255,255,0.4) 0 1px 0;
+        text-shadow: #0d0d0d 0 1px 0;
+        color: #ededed;
+        font-size: 16px;
+        font-family: helvetica, serif;
+        text-decoration: none;
+        vertical-align: middle;
+		position:absolute;
+		top:150px;
+		left:10px;
+      }
+      .button:hover {
+        border: 1px solid #0a3c59;
+        text-shadow: #1e4158 0 1px 0;
+        background: #3e779d;
+        background: -webkit-gradient(linear, left top, left bottom, from(#f2faff), to(#3e779d));
+        background: -webkit-linear-gradient(top, #f2faff, #3e779d);
+        background: -moz-linear-gradient(top, #f2faff, #3e779d);
+        background: -ms-linear-gradient(top, #f2faff, #3e779d);
+        background: -o-linear-gradient(top, #f2faff, #3e779d);
+        background-image: -ms-linear-gradient(top, #f2faff 0%, #3e779d 100%);
+        color: #fff;
+      }
+      .button:active {
+        text-shadow: #1e4158 0 1px 0;
+        border: 1px solid #0a3c59;
+        background: #65a9d7;
+        background: -webkit-gradient(linear, left top, left bottom, from(#3e779d), to(#3e779d));
+        background: -webkit-linear-gradient(top, #3e779d, #65a9d7);
+        background: -moz-linear-gradient(top, #3e779d, #65a9d7);
+        background: -ms-linear-gradient(top, #3e779d, #65a9d7);
+        background: -o-linear-gradient(top, #3e779d, #65a9d7);
+        background-image: -ms-linear-gradient(top, #3e779d 0%, #65a9d7 100%);
+        color: #fff;
+      }
+	  
+	html { 
+  background: url(images/4.jpg) no-repeat center center fixed; 
+  -webkit-background-size: cover;
+  -moz-background-size: cover;
+  -o-background-size: cover;
+  background-size: cover;
+}
+	
+</style>
+<link href="css/bootstrap.css" rel="stylesheet" type="text/css" />
+
+</head>
+<body ng-controller="RegisterController">
+<center><b><h1></h1></b></center>
+<center>
+<div class="btn-group-vertical" role="group" aria-label="Vertical button group" style="position:absolute;left:320px;top:120px">
+
+    <input type="text" class="btn btn-default" placeholder="User Name" ng-model="user_name" id="user"><br>
+   <button type="button" class="btn btn-default" ng-click="deleteuser1(user_name)">Delete UserName</button>
+  
+</div>
+    
+<script src="js/jquery-1.11.2.min.js" type="text/javascript"></script>
+<script src="js/bootstrap.js" type="text/javascript"></script>
+</body>
+
+    <script>
+    var user =localStorage.getItem("username");
+        //alert(user);
+            var last =localStorage.getItem("lastname");
+
+            var pass =localStorage.getItem("password");
+
+            var email =localStorage.getItem("emailid");
+
+  document.getElementById('label').innerHTML=" "+name;
+          document.getElementById('user').innerHTML=""+user;
+
+          document.getElementById('last').innerHTML=" "+last;
+
+          document.getElementById('pass').innerHTML=" "+pass;
+          document.getElementById('email').innerHTML=" "+email;
+
+
+    </script></html>[
+
+	{"device":"iphone","cnt":31667},
+	{"device":"android","cnt":24925},
+	{"device":"web","cnt":17904},
+	{"device":"ipad","cnt":2032},
+	{"device":"windowsphone","cnt":751},
+	{"device":"blackberry","cnt":382}
+]<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" data-ng-app="myApp">
+<head>
+     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <title>Tweet Analayzer</title>
+    <meta content='width=device-width, initial-scale=1' name='viewport'/>
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js" type="text/javascript"></script>
+    <script src="ajaxGetPost.js" type="text/javascript"></script>
+    <script type="text/javascript" src="https://www.google.com/jsapi"></script>
+    
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<title>User Home Page</title>
+<link rel="stylesheet" href="style.css" type="text/css" />
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.4.4/angular.min.js" type="application/javascript"></script>  
+  <script src="js/app.js"></script>
+<style>
+.button {
+        border: 1px solid #7d868c;
+        background: #161717;
+        background: -webkit-gradient(linear, left top, left bottom, from(#ffffff), to(#161717));
+        background: -webkit-linear-gradient(top, #ffffff, #161717);
+        background: -moz-linear-gradient(top, #ffffff, #161717);
+        background: -ms-linear-gradient(top, #ffffff, #161717);
+        background: -o-linear-gradient(top, #ffffff, #161717);
+        background-image: -ms-linear-gradient(top, #ffffff 0%, #161717 100%);
+        padding: 14px 28px;
+        -webkit-border-radius: 7px;
+        -moz-border-radius: 7px;
+        border-radius: 7px;
+        -webkit-box-shadow: rgba(255,255,255,0.4) 0 1px 0, inset rgba(255,255,255,0.4) 0 1px 0;
+        -moz-box-shadow: rgba(255,255,255,0.4) 0 1px 0, inset rgba(255,255,255,0.4) 0 1px 0;
+        box-shadow: rgba(255,255,255,0.4) 0 1px 0, inset rgba(255,255,255,0.4) 0 1px 0;
+        text-shadow: #0d0d0d 0 1px 0;
+        color: #ededed;
+        font-size: 16px;
+        font-family: helvetica, serif;
+        text-decoration: none;
+        vertical-align: middle;
+		position:absolute;
+		top:150px;
+		left:10px;
+      }
+      .button:hover {
+        border: 1px solid #0a3c59;
+        text-shadow: #1e4158 0 1px 0;
+        background: #3e779d;
+        background: -webkit-gradient(linear, left top, left bottom, from(#f2faff), to(#3e779d));
+        background: -webkit-linear-gradient(top, #f2faff, #3e779d);
+        background: -moz-linear-gradient(top, #f2faff, #3e779d);
+        background: -ms-linear-gradient(top, #f2faff, #3e779d);
+        background: -o-linear-gradient(top, #f2faff, #3e779d);
+        background-image: -ms-linear-gradient(top, #f2faff 0%, #3e779d 100%);
+        color: #fff;
+      }
+      .button:active {
+        text-shadow: #1e4158 0 1px 0;
+        border: 1px solid #0a3c59;
+        background: #65a9d7;
+        background: -webkit-gradient(linear, left top, left bottom, from(#3e779d), to(#3e779d));
+        background: -webkit-linear-gradient(top, #3e779d, #65a9d7);
+        background: -moz-linear-gradient(top, #3e779d, #65a9d7);
+        background: -ms-linear-gradient(top, #3e779d, #65a9d7);
+        background: -o-linear-gradient(top, #3e779d, #65a9d7);
+        background-image: -ms-linear-gradient(top, #3e779d 0%, #65a9d7 100%);
+        color: #fff;
+      }
+	  
+	
+	
+</style>
+<link href="css/bootstrap.css" rel="stylesheet" type="text/css" />
+
+</head>
+<body style="background-image:url(images/bg1.jpg) " ng-controller="RegisterController">
+<center  ><b ><h1 style="color:white"> Welcome to Twitter Analytics</h1></b></center>
+
+
+<div class="btn-group-vertical" role="group" aria-label="Vertical button group">
+  <button type="button" class="btn btn-default" ng-click="query1()">Query 1</button><br>
+  <button type="button" class="btn btn-default" ng-click="query2()">Query 2</button><br>
+    <button type="button" class="btn btn-default" ng-click="query3()">Query 3</button><br>
+  <button type="button" class="btn btn-default" ng-click="query4()">Query 4</button><br>
+    <button type="button" class="btn btn-default" ng-click="query5()">Query 5</button><br>
+  <button type="button" class="btn btn-default" ng-click="query6()">Query 6</button><br>
+    <button type="button" class="btn btn-default" ng-click="query7()">Query 7</button><br>
+  <button type="button" class="btn btn-default" ng-click="query8()">Query 8</button><br>
+    <button type="button" class="btn btn-default" ng-click="query9()">Query 9</button><br>
+    <button type="button" class="btn btn-default" ng-click="query10()">Query 10</button><br>
+   <button type="button" class="btn btn-default" onclick="window.location.href='homePage.html'">Home</button>
+<br>
+</div>
+    <div style="position:absolute;top:80px;left:200px" ng-hide="visibile">
+<iframe height="550px" src="{{srcc}}" width="950px" scrolling="yes">
+</iframe></div>
+    
+<script src="js/jquery-1.11.2.min.js" type="text/javascript"></script>
+<script src="js/bootstrap.js" type="text/javascript"></script>
+</body>
+</html>
+  <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
+
+<head>
+  <title>ARaynorDesign Template</title>
+  <meta name="description" content="free website template" />
+  <meta name="keywords" content="enter your keywords here" />
+  <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=9" />
+  <link rel="stylesheet" type="text/css" href="css/style.css" />
+  <script type="text/javascript" src="js/jquery.min.js"></script>
+  <script type="text/javascript" src="js/image_slide.js"></script>
+</head>
+
+<body>
+  <div id="main">
+    <div id="header">
+	  <div id="banner">
+	    <div id="welcome">
+	      <h1>Welcome To Tweet &nbsp;Analytics</h1>
+	    </div><!--close welcome-->
+	    <div id="menubar">
+          <ul id="menu">
+              <li class="current"><a href="index.html" >Home</a></li>
+            <li><a href="query1.html">Query 1</a></li>
+            <li><a href="query2.html">Query 2</a></li>
+            <li><a href="query3.html">Query 3</a></li>
+              <li><a href="query4.html">Query 4</a></li>
+            <li><a href="query5.html">Query 5</a></li>
+            <li><a href="query6.html">Query 6</a></li>
+            <li><a href="query7.html">Query 7</a></li>
+            <li class="current"><a href="query8.html">Query 8 </a></li>
+              <li><a href="query7.html">Query 7</a></li>
+          </ul>
+        </div><!--close menubar-->	  
+	  </div><!--close banner-->	
+    </div><!--close header-->	
+    
+	<div id="site_content">		
+
+      <div class="slideshow">  
+		<ul class="slideshow">
+          <li class="show"><img width="900" height="250" src="C:\Users\_harsha\Desktop\images.jpg" /></li>
+          <li><img width="900" height="250" src="C:\Users\_harsha\Desktop\images4.jpg"  /></li>
+        </ul> 
+      </div><!--close slideshow-->		
+	 
+	  <div id="content">
+        <div class="content_item">
+		  <div class="form_settings">
+          
+			
+          </div><!--close form_settings-->
+		</div><!--close content_item-->
+      </div><!--close content-->  
+    
+	</div><!--close site_content-->
+      
+	<div id="content_cream">
+	  <div class="content_cream_container_box">
+		
+		</div><!--close readmore-->
+	  </div><!--close content_cream_container_box-->
+      <div class="content_cream_container_box">
+       
+		</div><!--close readmore-->
+	  </div><!--close content_cream_container_box-->
+      <div class="content_cream_container_boxl">
+		
+		</div><!--close readmore-->	  
+	  </div><!--close content_cream_container_box1-->      
+	  <br style="clear:both"/>
+    </div><!--close content_cream-->   
+ 
+  </div><!--close main-->
+  
+  
+</body>
+</html>
+[
+
+	{"lang":"en","cnt":63791},
+	{"lang":"es","cnt":12724},
+	{"lang":"pt","cnt":9109},
+	{"lang":"fr","cnt":3421},
+	{"lang":"ja","cnt":1973},
+	{"lang":"en-gb","cnt":1927},
+	{"lang":"it","cnt":1650},
+	{"lang":"de","cnt":1197},
+	{"lang":"id","cnt":1164},
+	{"lang":"tr","cnt":1128},
+	{"lang":"ru","cnt":555},
+	{"lang":"nl","cnt":477},
+	{"lang":"pl","cnt":412},
+	{"lang":"ar","cnt":403},
+	{"lang":"en-GB","cnt":284}
+]<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html ng-app="myApp">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.4.4/angular.min.js" type="application/javascript"></script>  
+  <script src="js/app.js"></script>
+<!--<script>
+
+function LoginController($scope){
+$scope.login=function(user,pwd)
+{
+	localStorage.setItem("username",user);
+};
+
+}
+
+</script>-->
+<title>User main Page</title>
+<style>
+.myButton {
+	-moz-box-shadow:inset 0px 0px 0px 0px #9fb4f2;
+	-webkit-box-shadow:inset 0px 0px 0px 0px #9fb4f2;
+	box-shadow:inset 0px 0px 0px 0px #9fb4f2;
+	background-color:#7892c2;
+	-moz-border-radius:12px;
+	-webkit-border-radius:12px;
+	border-radius:12px;
+	border:1px solid #4e6096;
+	display:inline-block;
+	cursor:pointer;
+	color:#ffffff;
+	font-family:Arial;
+	font-size:17px;
+	padding:6px 31px;
+	text-decoration:none;
+	text-shadow:0px 1px 0px #283966;
+}
+.myButton:hover {
+	background-color:#476e9e;
+}
+.myButton:active {
+	position:relative;
+	top:1px;
+}
+.loginbtn
+{
+	position:absolute;
+	top:350px;
+	left:580px;
+}
+.registerbtn
+{
+	position:absolute;
+	top:400px;
+	left:580px;
+}
+.heading{
+
+margin: 1em 0 0.5em 0;
+	color:blue;
+	font-weight: normal;
+	font-family: 'Ultra', sans-serif;   
+	font-size: 36px;
+	line-height: 42px;
+	text-shadow: 0 2px white, 0 3px #777;
+	position:absolute;
+	left:500px;
+
+}
+.heading1{
+
+margin: 1em 0 0.5em 0;
+	color:#00000;
+	font-weight: normal;
+	font-family: 'Ultra', sans-serif;   
+	font-size: 25px;
+	line-height: 42px;
+	
+	
+	position:absolute;
+	left:530px;}
+
+html { 
+  background: url(images/4.jpg) no-repeat center center fixed; 
+  -webkit-background-size: cover;
+  -moz-background-size: cover;
+  -o-background-size: cover;
+  background-size: cover;
+}
+        </style>
+
+
+</head>
+
+<body ng-controller="RegisterController">
+
+<div class="heading">
+<h2>Chat Application</h2></div>
+
+<div class="loginbtn">
+<!-- <a href="home.html" class="myButton">Login</a> -->
+<input type="submit" ng-click="login(username,password)" value="Login" class="myButton"></input>
+    
+</div>
+
+<div class="registerbtn">
+<a href="register.html" class="myButton" >Register</a>
+</div>
+<form>
+<div style="position:absolute;top:260px;left:560px;">
+<input type="text" placeholder="User Name" ng-model="username" id="user"><br>
+<input type="password" placeholder="Password"
+ style="position:absolute;top:30px;" ng-model="password">
+</div>
+
+<center>
+<div style="position:absolute;left:550px;top:450px;color:brown" ng-hide="checked">
+    {{msg}} 
+</div>
+
+    </center>
+
+</body>
+
+</html>
+[
+
+	{"singer":"nickiminaj","time_zone":"Pacific Time (US & Canada)","_c2":"Wed Nov 2","cnt":750},
+	{"singer":"nickiminaj","time_zone":"Eastern Time (US & Canada)","_c2":"Wed Nov 2","cnt":600},
+	{"singer":"nickiminaj","time_zone":"Central Time (US & Canada)","_c2":"Wed Nov 2","cnt":461},
+	{"singer":"nickiminaj","time_zone":"Atlantic Time (Canada)","_c2":"Wed Nov 2","cnt":236},
+	{"singer":"nickiminaj","time_zone":"Brasilia","_c2":"Wed Nov 2","cnt":231},
+	{"singer":"nickiminaj","time_zone":"Quito","_c2":"Wed Nov 2","cnt":218},
+	{"singer":"nickiminaj","time_zone":"Ljubljana","_c2":"Thu Nov 2","cnt":160},
+	{"singer":"nickiminaj","time_zone":"Pacific Time (US & Canada)","_c2":"Tue Nov 2","cnt":149},
+	{"singer":"nickiminaj","time_zone":"Hawaii","_c2":"Wed Nov 2","cnt":138},
+	{"singer":"nickiminaj","time_zone":"London","_c2":"Wed Nov 2","cnt":128}
+][
+
+	{"singer":"rihanna","cnt":18805},
+	{"singer":"taylorswift","cnt":17729},
+	{"singer":"adele","cnt":9136},
+	{"singer":"nickiminaj","cnt":8257},
+	{"singer":"JLo","cnt":6255},
+	{"singer":"britneyspears","cnt":6147},
+	{"singer":"justinbeiber","cnt":5171},
+	{"singer":"brunomars","cnt":3098},
+	{"singer":"selenagomez","cnt":2774},
+	{"singer":"justintimberlake","cnt":2380},
+	{"singer":"katyperry","cnt":2266},
+	{"singer":"ladygaga","cnt":2125},
+	{"singer":"eminem","cnt":1701},
+	{"singer":"shakira","cnt":1515},
+	{"singer":"mileycyrus","cnt":1313}
+]<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <title>Tweet Analayzer</title>
+    <meta content='width=device-width, initial-scale=1' name='viewport'/>
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js" type="text/javascript"></script>
+    <script src="ajaxGetPost.js" type="text/javascript"></script>
+    <script type="text/javascript" src="https://www.google.com/jsapi"></script>
+    <script>
+        function charts(data,ChartType)
+        {
+            var c=ChartType;
+            var jsonData=data;
+            google.load("visualization", "1", {packages:["corechart"], callback: drawVisualization});
+            function drawVisualization()
+            {
+                var data = new google.visualization.DataTable();
+                data.addColumn('string', 'Tweet Location');
+                data.addColumn('number', 'Taylor Swift Tweet Count');
+                $.each(jsonData, function(i,jsonData)
+                {
+                    var value=jsonData.cnt;
+                    var name=jsonData.time_zone;
+                    data.addRows([ [name, value]]);
+                });
+
+                var options = {
+                    title : "Taylor Swift Top tweets",
+                    colorAxis: {colors: ['#54C492', '#cc0000']},
+                    datalessRegionColor: '#dedede',
+                    colors: ['green'],
+                    histogram: { lastBucketPercentile: 5 }
+                };
+
+                var chart;
+                if(c=="ColumnChart")
+                    chart = new google.visualization.ColumnChart(document.getElementById('chart_div'));
+                else if(c=="PieChart")
+                    chart = new google.visualization.PieChart(document.getElementById('piechart_div'));
+                else if(c=="BarChart")
+                    chart = new google.visualization.BarChart(document.getElementById('bar_div'));
+                else if(c=="GeoChart")
+                    chart = new google.visualization.GeoChart(document.getElementById('regions_div'));
+                else if(c="CandleChart")
+                    var chart = new google.visualization.CandlestickChart(document.getElementById('candle_div'));
+
+                chart.draw(data, options);
+
+
+            }
+        }
+
+        $(document).ready(function ()
+        {
+            url='taylorswift.json';
+            ajax_data('GET',url, function(data)
+            {
+                charts(data,"ColumnChart");
+                charts(data,"PieChart");
+                charts(data,"BarChart");
+                charts(data,"GeoChart");
+                charts(data,"CandleChart");
+            });
+        });
+    </script>
+    <style>
+        body{font-family:arial}
+    </style>
+</head>
+<body style="text-align:center">
+
+<div id="chart_div" style="width: 900px; height: 500px;"></div>
+<p style="background-color:white;font-size:15px"> <b>DESCRIPTION: This histogram shows the top 15 time zones from where users tweeted about singer Taylor Swift (Second most popular singer). This will help us analyse the popularity of the singer Taylor Swift in different time zones.</b> <br> 
+    <b>QUERY 10:</b> val r4 = sqlContext.sql("SELECT singer, user.time_zone, SUBSTR(created_at, 0, 9),COUNT(*) AS cnt FROM tweet_table WHERE user.time_zone IS NOT NULL AND singer = 'taylorswift' GROUP BY singer, user.time_zone,SUBSTR(created_at, 0, 9) ORDER BY cnt DESC LIMIT 10") <br>
+r4.coalesce(1).write.json("ts_location")</p>
+
+
+</body>
+</html><!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <title>Tweet Analayzer</title>
+    <meta content='width=device-width, initial-scale=1' name='viewport'/>
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js" type="text/javascript"></script>
+    <script src="ajaxGetPost.js" type="text/javascript"></script>
+    <script type="text/javascript" src="https://www.google.com/jsapi"></script>
+    <script>
+        function charts(data,ChartType)
+        {
+            var c=ChartType;
+            var jsonData=data;
+            google.load("visualization", "1", {packages:["corechart"], callback: drawVisualization});
+            function drawVisualization()
+            {
+                var data = new google.visualization.DataTable();
+                data.addColumn('string', 'Device');
+                data.addColumn('number', 'Device Density');
+                $.each(jsonData, function(i,jsonData)
+                {
+                    var value=jsonData.cnt;
+                    var name=jsonData.device;
+                    data.addRows([ [name, value]]);
+                });
+
+                var options = {
+                    title : "Popular Devices",
+                    colorAxis: {colors: ['#54C492', '#cc0000']},
+                    datalessRegionColor: '#dedede',
+                    defaultColor: '#dedede'
+                };
+
+                var chart;
+                if(c=="ColumnChart")
+                    chart = new google.visualization.ColumnChart(document.getElementById('chart_div'));
+                else if(c=="PieChart")
+                    chart = new google.visualization.PieChart(document.getElementById('piechart_div'));
+                else if(c=="BarChart")
+                    chart = new google.visualization.BarChart(document.getElementById('bar_div'));
+                else if(c=="GeoChart")
+                    chart = new google.visualization.GeoChart(document.getElementById('regions_div'));
+
+                chart.draw(data, options);
+            }
+        }
+
+        $(document).ready(function ()
+        {
+            url='devices.json';
+            ajax_data('GET',url, function(data)
+            {
+                charts(data,"ColumnChart");
+                charts(data,"PieChart");
+                charts(data,"BarChart");
+                charts(data,"GeoChart");
+            });
+        });
+    </script>
+    <style>
+        body{font-family:arial}
+    </style>
+</head>
+<body style="text-align:center">
+<div id="bar_div" style="width: 900px; height: 500px;"></div>
+<div id="piechart_div" style="width: 900px; height: 500px;"></div>
+
+<p style="background-color:white;font-size:15px"> <b>DESCRIPTION: This bar graph and pie chart shows the most used devices for tweeting by the twitter users. This will help us predict the device preferences of twitter users  </b> <br> 
+    <b>QUERY 2:</b> val r5 = sqlContext.sql("SELECT device , count(*) as cnt FROM tweet_table WHERE user.verified OR NOT user.verified GROUP BY device HAVING device != '' ORDER BY cnt DESC") <br>
+r5.coalesce(1).write.json("devices")   </p>
+
+</body>
+</html><!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <title>Tweet Analayzer</title>
+    <meta content='width=device-width, initial-scale=1' name='viewport'/>
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js" type="text/javascript"></script>
+    <script src="ajaxGetPost.js" type="text/javascript"></script>
+    <script type="text/javascript" src="https://www.google.com/jsapi"></script>
+    <script>
+        function charts(data,ChartType)
+        {
+            var c=ChartType;
+            var jsonData=data;
+            google.load("visualization", "1", {packages:["corechart"], callback: drawVisualization});
+            function drawVisualization()
+            {
+                var data = new google.visualization.DataTable();
+                data.addColumn('string', 'User Lang');
+                data.addColumn('number', 'Lang user Density');
+                $.each(jsonData, function(i,jsonData)
+                {
+                    var value=jsonData.cnt;
+                    var name=jsonData.lang;
+                    data.addRows([ [name, value]]);
+                });
+
+                var options = {
+                    title : "All Languages Density",
+                    colorAxis: {colors: ['#54C492', '#cc0000']},
+                    datalessRegionColor: '#dedede',
+                    defaultColor: '#dedede'
+                };
+
+                var chart;
+                if(c=="ColumnChart")
+                    chart = new google.visualization.ColumnChart(document.getElementById('chart_div'));
+                else if(c=="PieChart")
+                    chart = new google.visualization.PieChart(document.getElementById('piechart_div'));
+                else if(c=="BarChart")
+                    chart = new google.visualization.BarChart(document.getElementById('bar_div'));
+                else if(c=="GeoChart")
+                    chart = new google.visualization.GeoChart(document.getElementById('regions_div'));
+                else if(c="DonutChart")
+                    chart = new google.visualization.PieChart(document.getElementById('donutchart'));
+                chart.draw(data, options);
+
+
+            }
+        }
+
+        $(document).ready(function ()
+        {
+            url='all_lang.json';
+            ajax_data('GET',url, function(data)
+            {
+                charts(data,"ColumnChart");
+                charts(data,"PieChart");
+                charts(data,"BarChart");
+                charts(data,"GeoChart");
+                charts(data,"DonutChart");
+            });
+        });
+    </script>
+    <style>
+        body{font-family:arial}
+    </style>
+</head>
+<body style="text-align:center">
+<div id="donutchart" style="width: 900px; height: 500px;"></div>
+
+<p style="background-color:white;font-size:15px"> <b>DESCRIPTION: This pie chart shows the language distribution of tweets related to music. This will help visualize which lingual section of twitter users are more interested in music.</b> <br> 
+    <b>QUERY 3:</b> val r8 = sqlContext.sql("SELECT user.lang , COUNT(*) as cnt FROM tweet_table WHERE user.lang IS NOT NULL GROUP BY user.lang ORDER BY cnt DESC LIMIT 15") <br>
+r8.coalesce(1).write.json("all_lang")  </p>
+
+</body>
+</html><!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <title>Tweet Analayzer</title>
+    <meta content='width=device-width, initial-scale=1' name='viewport'/>
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js" type="text/javascript"></script>
+    <script src="ajaxGetPost.js" type="text/javascript"></script>
+    <script type="text/javascript" src="https://www.google.com/jsapi"></script>
+    <script>
+        function charts(data,ChartType)
+        {
+            var c=ChartType;
+            var jsonData=data;
+            google.load("visualization", "1", {packages:["corechart"], callback: drawVisualization});
+            function drawVisualization()
+            {
+                var data = new google.visualization.DataTable();
+                data.addColumn('string', 'User Lang');
+                data.addColumn('number', 'Time_Zone user Density');
+                $.each(jsonData, function(i,jsonData)
+                {
+                    var value=jsonData.cnt;
+                    var name=jsonData.time_zone;
+                    data.addRows([ [name, value]]);
+                });
+
+                var options = {
+                    title : "NickiMinaj Tweets From Time zones",
+                    colorAxis: {colors: ['#54C492', '#cc0000']},
+                    datalessRegionColor: '#dedede',
+                    defaultColor: '#dedede'
+                };
+
+                var chart;
+                if(c=="ColumnChart")
+                    chart = new google.visualization.ColumnChart(document.getElementById('chart_div'));
+                else if(c=="PieChart")
+                    chart = new google.visualization.PieChart(document.getElementById('piechart_div'));
+                else if(c=="BarChart")
+                    chart = new google.visualization.BarChart(document.getElementById('bar_div'));
+                else if(c=="GeoChart")
+                    chart = new google.visualization.GeoChart(document.getElementById('regions_div'));
+                else if(c="CandleChart")
+                    var chart = new google.visualization.CandlestickChart(document.getElementById('candle_div'));
+
+                chart.draw(data, options);
+
+
+            }
+        }
+
+        $(document).ready(function ()
+        {
+            url='nick_loc.json';
+            ajax_data('GET',url, function(data)
+            {
+                charts(data,"ColumnChart");
+                charts(data,"PieChart");
+                charts(data,"BarChart");
+                charts(data,"GeoChart");
+                charts(data,"CandleChart");
+            });
+        });
+    </script>
+    <style>
+        body{font-family:arial}
+    </style>
+</head>
+<body style="text-align:center">
+
+<div id="chart_div" style="width: 900px; height: 500px;"></div>
+    
+    <p style="background-color:white;font-size:15px"> <b>DESCRIPTION: This bar chart shows the top 15 time zones from where users tweeted about singer Nicki Minaj. This will help us analyse the popularity of the singer Nicki Minaj in different time zones.</b> <br> 
+    <b>QUERY 4:</b> val r4 = sqlContext.sql("SELECT singer, user.time_zone, SUBSTR(created_at, 0, 9),COUNT(*) AS cnt FROM tweet_table WHERE user.time_zone IS NOT NULL AND singer = 'nickiminaj' GROUP BY singer, user.time_zone,SUBSTR(created_at, 0, 9) ORDER BY cnt DESC LIMIT 10") <br>
+r4.coalesce(1).write.json("nm_location")  </p>
+
+</body>
+</html><!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <title>Tweet Analayzer</title>
+    <meta content='width=device-width, initial-scale=1' name='viewport'/>
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js" type="text/javascript"></script>
+    <script src="ajaxGetPost.js" type="text/javascript"></script>
+    <script type="text/javascript" src="https://www.google.com/jsapi"></script>
+    <script>
+        function charts(data,ChartType)
+        {
+            var c=ChartType;
+            var jsonData=data;
+            google.load("visualization", "1", {packages:["corechart"], callback: drawVisualization});
+            function drawVisualization()
+            {
+                var data = new google.visualization.DataTable();
+                data.addColumn('string', 'User Lang');
+                data.addColumn('number', 'Time_Zone user Density');
+                $.each(jsonData, function(i,jsonData)
+                {
+                    var value=jsonData.cnt;
+                    var name=jsonData.singer;
+                    data.addRows([ [name, value]]);
+                });
+
+                var options = {
+                    title : "Singers Popularity on Twitter",
+                    colorAxis: {colors: ['#54C492', '#cc0000']},
+                    datalessRegionColor: '#dedede',
+                    defaultColor: '#dedede',
+                    is3D: true
+                };
+
+                var chart;
+                if(c=="ColumnChart")
+                    chart = new google.visualization.ColumnChart(document.getElementById('chart_div'));
+                else if(c=="PieChart")
+                    chart = new google.visualization.PieChart(document.getElementById('piechart_div'));
+                else if(c=="BarChart")
+                    chart = new google.visualization.BarChart(document.getElementById('bar_div'));
+                else if(c=="GeoChart")
+                    chart = new google.visualization.GeoChart(document.getElementById('regions_div'));
+                else if(c="CandleChart")
+                    var chart = new google.visualization.CandlestickChart(document.getElementById('candle_div'));
+
+                chart.draw(data, options);
+
+
+            }
+        }
+
+        $(document).ready(function ()
+        {
+            url='popular.json';
+            ajax_data('GET',url, function(data)
+            {
+                charts(data,"ColumnChart");
+                charts(data,"PieChart");
+                charts(data,"BarChart");
+                charts(data,"GeoChart");
+                charts(data,"CandleChart");
+            });
+        });
+    </script>
+    <style>
+        body{font-family:arial}
+    </style>
+</head>
+<body style="text-align:center">
+<div id="piechart_div" style="width: 900px; height: 500px;"></div>
+
+<p style="background-color:white;font-size:15px"> <b>DESCRIPTION: This 3D Pie chart shows the popularity of Singers based on number of tweets for each singer. This will help us visualize which singer is more popular relatively when compared to all others.</b> <br> 
+    <b>QUERY 5:</b> val r3 = sqlContext.sql("SELECT  singer ,count(*) as cnt FROM tweet_table WHERE user.verified OR NOT user.verified GROUP BY singer HAVING singer != ''  ORDER BY  cnt DESC") <br>
+r3.write.json("popular1")   </p>
+
+</body>
+</html><!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <title>Tweet Analayzer</title>
+    <meta content='width=device-width, initial-scale=1' name='viewport'/>
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js" type="text/javascript"></script>
+    <script src="ajaxGetPost.js" type="text/javascript"></script>
+    <script type="text/javascript" src="https://www.google.com/jsapi"></script>
+    <script>
+        function charts(data,ChartType)
+        {
+            var c=ChartType;
+            var jsonData=data;
+            google.load("visualization", "1", {packages:["corechart"], callback: drawVisualization});
+            function drawVisualization()
+            {
+                var data = new google.visualization.DataTable();
+                data.addColumn('string', 'User Lang');
+                data.addColumn('number', 'Sensitive Tweet Count');
+                $.each(jsonData, function(i,jsonData)
+                {
+                    var value=jsonData.cnt;
+                    var name=jsonData.singer;
+                    data.addRows([ [name, value]]);
+                });
+
+                var options = {
+                    title : "Singers' Tweets possibly being Sensitive",
+                    colorAxis: {colors: ['#54C492', '#cc0000']},
+                    datalessRegionColor: '#dedede',
+                    colors: ['#e7711c'],
+                    histogram: { lastBucketPercentile: 5 }
+                };
+
+                var chart;
+                if(c=="ColumnChart")
+                    chart = new google.visualization.ColumnChart(document.getElementById('chart_div'));
+                else if(c=="PieChart")
+                    chart = new google.visualization.PieChart(document.getElementById('piechart_div'));
+                else if(c=="BarChart")
+                    chart = new google.visualization.BarChart(document.getElementById('bar_div'));
+                else if(c=="GeoChart")
+                    chart = new google.visualization.GeoChart(document.getElementById('regions_div'));
+                else if(c="CandleChart")
+                    var chart = new google.visualization.CandlestickChart(document.getElementById('candle_div'));
+
+                chart.draw(data, options);
+
+
+            }
+        }
+
+        $(document).ready(function ()
+        {
+            url='sensitive.json';
+            ajax_data('GET',url, function(data)
+            {
+                charts(data,"ColumnChart");
+                charts(data,"PieChart");
+                charts(data,"BarChart");
+                charts(data,"GeoChart");
+                charts(data,"CandleChart");
+            });
+        });
+    </script>
+    <style>
+        body{font-family:arial}
+    </style>
+</head>
+<body style="text-align:center">
+
+<div id="chart_div" style="width: 900px; height: 500px;"></div>
+    <p style="background-color:white;font-size:15px"> <b>DESCRIPTION: This Histogram chart shows which Singers have tweets which could be possibly sensitive in nature. This will help us analyse what nature of tweets are written about different singers. </b> <br> 
+    <b>QUERY 6:</b> val r10 = sqlContext.sql("SELECT singer , possibly_sensitive,count(*) as cnt FROM tweet_table WHERE possibly_sensitive  GROUP BY singer, possibly_sensitive HAVING singer != '' ORDER BY cnt DESC") <br>
+r10.coalesce(1).write.json("sensitive")   </p>
+
+</body>
+</html><!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <title>Tweet Analayzer</title>
+    <meta content='width=device-width, initial-scale=1' name='viewport'/>
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js" type="text/javascript"></script>
+    <script src="ajaxGetPost.js" type="text/javascript"></script>
+    <script type="text/javascript" src="https://www.google.com/jsapi"></script>
+    <script>
+        function charts(data,ChartType)
+        {
+            var c=ChartType;
+            var jsonData=data;
+            google.load("visualization", "1", {packages:["corechart"], callback: drawVisualization});
+            function drawVisualization()
+            {
+                var data = new google.visualization.DataTable();
+                data.addColumn('string', 'User Lang');
+                data.addColumn('number', 'Time_Zone user Density');
+                $.each(jsonData, function(i,jsonData)
+                {
+                    var value=jsonData.total_count;
+                    var name=jsonData.time_zone;
+                    data.addRows([ [name, value]]);
+                });
+
+                var options = {
+                    title : "Popular Tweet Time Zones",
+                    colorAxis: {colors: ['#54C492', '#cc0000']},
+                    datalessRegionColor: '#dedede',
+                    defaultColor: '#dedede'
+
+                };
+
+                var chart;
+                if(c=="ColumnChart")
+                    chart = new google.visualization.ColumnChart(document.getElementById('chart_div'));
+                else if(c=="PieChart")
+                    chart = new google.visualization.PieChart(document.getElementById('piechart_div'));
+                else if(c=="BarChart")
+                    chart = new google.visualization.BarChart(document.getElementById('bar_div'));
+                else if(c=="GeoChart")
+                    chart = new google.visualization.GeoChart(document.getElementById('regions_div'));
+                else if(c="CandleChart")
+                    var chart = new google.visualization.CandlestickChart(document.getElementById('candle_div'));
+
+                chart.draw(data, options);
+
+
+            }
+        }
+
+        $(document).ready(function ()
+        {
+            url='timetweet.json';
+            ajax_data('GET',url, function(data)
+            {
+                charts(data,"ColumnChart");
+                charts(data,"PieChart");
+                charts(data,"BarChart");
+                charts(data,"GeoChart");
+                charts(data,"CandleChart");
+            });
+        });
+    </script>
+    <style>
+        body{font-family:arial}
+    </style>
+</head>
+<body style="text-align:center">
+
+<div id="regions_div" style="width: 900px; height: 500px;"></div>
+ <p style="background-color:white;font-size:15px"> <b>DESCRIPTION: This Geo chart shows the most active regions based on number of tweets from these regions. This will help us analyse what geographic regions are active on twitter. </b> <br> 
+    <b>QUERY 7:</b> val r2 = sqlContext.sql("SELECT user.time_zone, SUBSTR(created_at, 0, 9), COUNT(*) AS total_count FROM tweet_table WHERE user.time_zone IS NOT NULL GROUP BY user.time_zone, SUBSTR(created_at, 0, 9) ORDER BY total_count DESC LIMIT 15") <br>
+r2.coalesce(1).write.json("timezone")  </p>
+
+</body>
+</html><!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <title>Tweet Analayzer</title>
+    <meta content='width=device-width, initial-scale=1' name='viewport'/>
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js" type="text/javascript"></script>
+    <script src="ajaxGetPost.js" type="text/javascript"></script>
+    <script type="text/javascript" src="https://www.google.com/jsapi"></script>
+    <script>
+        function charts(data,ChartType)
+        {
+            var c=ChartType;
+            var jsonData=data;
+            google.load("visualization", "1", {packages:["corechart"], callback: drawVisualization});
+            function drawVisualization()
+            {
+                var data = new google.visualization.DataTable();
+                data.addColumn('string', 'Tweet Text');
+                data.addColumn('number', 'ReTweet Count');
+                $.each(jsonData, function(i,jsonData)
+                {
+                    var value=jsonData.maxretweetcnt;
+                    var name=jsonData.text;
+                    data.addRows([ [name, value]]);
+                });
+
+                var options = {
+                    title : "Most Retweeted Tweets ",
+                    colorAxis: {colors: ['#54C492', '#cc0000']},
+                    datalessRegionColor: '#dedede',
+                    defaultColor: '#dedede',
+                    pieHole: 0.4,
+                };
+
+                var chart;
+                if(c=="ColumnChart")
+                    chart = new google.visualization.ColumnChart(document.getElementById('chart_div'));
+                else if(c=="PieChart")
+                    chart = new google.visualization.PieChart(document.getElementById('piechart_div'));
+                else if(c=="BarChart")
+                    chart = new google.visualization.BarChart(document.getElementById('bar_div'));
+                else if(c=="GeoChart")
+                    chart = new google.visualization.GeoChart(document.getElementById('regions_div'));
+                else if(c="CandleChart")
+                    var chart = new google.visualization.CandlestickChart(document.getElementById('candle_div'));
+
+                chart.draw(data, options);
+
+
+            }
+        }
+
+        $(document).ready(function ()
+        {
+            url='retweet.json';
+            ajax_data('GET',url, function(data)
+            {
+                charts(data,"ColumnChart");
+                charts(data,"PieChart");
+                charts(data,"BarChart");
+                charts(data,"GeoChart");
+                charts(data,"CandleChart");
+            });
+        });
+    </script>
+    <style>
+        body{font-family:arial}
+    </style>
+</head>
+<body style="text-align:center">
+
+<div id="piechart_div" style="width: 900px; height: 500px;"></div>
+ <p style="background-color:white;font-size:15px"> <b>DESCRIPTION: This Donut Chart shows which tweets were retweeted the most showing most popular tweets on twitter from the total retweeted count of each tweet. This will help us analyse which tweets are most popular from the time when it was first tweeted.</b> <br> 
+    <b>QUERY 8:</b> val r7 = sqlContext.sql("SELECT MAX(retweeted_status.retweet_count) as maxretweetcnt , retweeted_status.text FROM tweet_table GROUP BY retweeted_status.text ORDER BY maxretweetcnt DESC LIMIT 10")<br>
+r7.coalesce(1).write.json("topretweets")   </p>
+</body>
+</html><!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <title>Tweet Analayzer</title>
+    <meta content='width=device-width, initial-scale=1' name='viewport'/>
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js" type="text/javascript"></script>
+    <script src="ajaxGetPost.js" type="text/javascript"></script>
+    <script type="text/javascript" src="https://www.google.com/jsapi"></script>
+    <script>
+        function charts(data,ChartType)
+        {
+            var c=ChartType;
+            var jsonData=data;
+            google.load("visualization", "1", {packages:["corechart"], callback: drawVisualization});
+            function drawVisualization()
+            {
+                var data = new google.visualization.DataTable();
+                data.addColumn('string', 'Tweet Text');
+                data.addColumn('number', 'Tweet Count');
+                $.each(jsonData, function(i,jsonData)
+                {
+                    var value=jsonData.cnt;
+                    var name=jsonData.text;
+                    data.addRows([ [name, value]]);
+                });
+
+                var options = {
+                    title : "Top Tweets during short time period ",
+                    colorAxis: {colors: ['#54C492', '#cc0000']},
+                    datalessRegionColor: '#dedede',
+                    defaultColor: '#dedede',
+                    pieHole: 0.4,
+                };
+
+                var chart;
+                if(c=="ColumnChart")
+                    chart = new google.visualization.ColumnChart(document.getElementById('chart_div'));
+                else if(c=="PieChart")
+                    chart = new google.visualization.PieChart(document.getElementById('piechart_div'));
+                else if(c=="BarChart")
+                    chart = new google.visualization.BarChart(document.getElementById('bar_div'));
+                else if(c=="GeoChart")
+                    chart = new google.visualization.GeoChart(document.getElementById('regions_div'));
+                else if(c="CandleChart")
+                    var chart = new google.visualization.CandlestickChart(document.getElementById('candle_div'));
+
+                chart.draw(data, options);
+
+
+            }
+        }
+
+        $(document).ready(function ()
+        {
+            url='top5.json';
+            ajax_data('GET',url, function(data)
+            {
+                charts(data,"ColumnChart");
+                charts(data,"PieChart");
+                charts(data,"BarChart");
+                charts(data,"GeoChart");
+                charts(data,"CandleChart");
+            });
+        });
+    </script>
+    <style>
+        body{font-family:arial}
+    </style>
+</head>
+<body style="text-align:center">
+
+<div id="piechart_div" style="width: 900px; height: 500px;"></div>
+ <p style="background-color:white;font-size:15px"> <b>DESCRIPTION: This Donut Chart shows which tweets were most repeatedly tweeted during a period of time. This will help us analyse short term popularity of a tweet on twitter.</b> <br> 
+    <b>QUERY 9:</b> val r6 = sqlContext.sql("SELECT COUNT(*), text as cnt FROM tweet_table GROUP BY text ORDER BY cnt DESC LIMIT 6")<br>
+r6.coalesce(1).write.json("toptweets")</p>
+
+</body>
+</html><!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <title>Tweet Analayzer</title>
+    <meta content='width=device-width, initial-scale=1' name='viewport'/>
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js" type="text/javascript"></script>
+    <script src="ajaxGetPost.js" type="text/javascript"></script>
+    <script type="text/javascript" src="https://www.google.com/jsapi"></script>
+    <script>
+        function charts(data,ChartType)
+        {
+            var c=ChartType;
+            var jsonData=data;
+            google.load("visualization", "1", {packages:["corechart"], callback: drawVisualization});
+            function drawVisualization()
+            {
+                var data = new google.visualization.DataTable();
+                data.addColumn('string', 'Language');
+                data.addColumn('number', 'Language Density');
+                $.each(jsonData, function(i,jsonData)
+                {
+                    var value=jsonData.cnt;
+                    var name=jsonData.lang;
+                    data.addRows([ [name, value]]);
+                });
+
+                var options = {
+                    title : "Language Distribution for Singer Taylor Swift",
+                    colorAxis: {colors: ['#54C492', '#cc0000']},
+                    datalessRegionColor: '#dedede',
+                    defaultColor: '#dedede'
+                };
+
+                var chart;
+                if(c=="ColumnChart")
+                    chart = new google.visualization.ColumnChart(document.getElementById('chart_div'));
+                else if(c=="PieChart")
+                    chart = new google.visualization.PieChart(document.getElementById('piechart_div'));
+                else if(c=="BarChart")
+                    chart = new google.visualization.BarChart(document.getElementById('bar_div'));
+                else if(c=="GeoChart")
+                    chart = new google.visualization.GeoChart(document.getElementById('regions_div'));
+
+                chart.draw(data, options);
+            }
+        }
+
+        $(document).ready(function ()
+        {
+            url='lang.json';
+            ajax_data('GET',url, function(data)
+            {
+                charts(data,"ColumnChart");
+                charts(data,"PieChart");
+                charts(data,"BarChart");
+                charts(data,"GeoChart");
+            });
+        });
+    </script>
+    <style>
+        body{font-family:arial}
+    </style>
+</head>
+<body style="text-align:center">
+<div id="piechart_div" style="width: 900px; height: 450px;">
+    
+    </div>
+    <p style="background-color:white;font-size:15px"> <b>DESCRIPTION: This pie chart shows which are most active languages in which users tweet about the singer Taylor Swift. This will let us analyse the popularity based on language for that singer</b> <br> 
+    <b>QUERY 1:</b> val r1 = sqlContext.sql("SELECT user.lang , COUNT(*) as cnt FROM tweet_table WHERE user.lang IS NOT NULL AND text LIKE '%taylorswift%' GROUP BY user.lang ORDER BY cnt DESC") <br>
+r1.coalesce(1).write.json("lang.json")   </p>
+
+</body>
+</html><!DOCTYPE html>
+<html data-ng-app="myApp">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Registration Page</title>
+<link rel="stylesheet" href="style.css" type="text/css" />
+<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.4.4/angular.min.js" type="application/javascript"></script>  
+  <script src="js/app.js"></script>
+    
+<style>
+		.myButton {
+	-moz-box-shadow:inset 0px 0px 0px 0px #9fb4f2;
+	-webkit-box-shadow:inset 0px 0px 0px 0px #9fb4f2;
+	box-shadow:inset 0px 0px 0px 0px #9fb4f2;
+	background-color:#7892c2;
+	-moz-border-radius:2px;
+	-webkit-border-radius:2px;
+	border-radius:2px;
+	border:1px solid #4e6096;
+	display:inline-block;
+	cursor:pointer;
+	color:#ffffff;
+	font-family:Arial;
+	font-size:17px;
+	padding:4px 45px;
+	text-decoration:none;
+	text-shadow:0px 1px 0px #283966;
+}
+.myButton:hover {
+	background-color:#476e9e;
+}
+.myButton:active {
+	position:relative;
+	top:1px;
+}
+   
+html { 
+  background: url(images/4.jpg) no-repeat center center fixed; 
+  -webkit-background-size: cover;
+  -moz-background-size: cover;
+  -o-background-size: cover;
+  background-size: cover;
+}
+    
+</style>
+
+    
+</head>
+
+<body class="login" ng-controller="RegisterController">
+
+<div class="loginbox radius" style="position:absolute;left:410px; top:100px;">
+<h2 style="color:#141823; text-align:center;">Registration Form</h2>
+	<div class="loginboxinner radius">
+    	
+        
+        <div class="loginform">
+                	
+        	<form id="login" action="" method="post">
+            <p>
+                    <input type="text" id="username" name="username" placeholder=" First Name/User Name" value="" class="radius" ng-model="username"
+                           />	 
+                </p>
+                <p> <input name="username" type="text" class="radius" id="username" placeholder="Last Name" value="" maxlength="25" ng-model="lastname" />
+                </p>
+            	<p>
+                    <input type="text" id="username" name="username" placeholder="Your Email" value="" class="radius" ng-model="emailid" />
+                </p>
+                <p>
+                    <input type="text" id="email." name="password" placeholder="Re-enter Email" class="radius" ng-model="reemailid" />
+                </p>
+                <p>
+                    <input type="password" id="password"  placeholder="New Password" class="radius" ng-model="password" />
+                </p>
+                
+            </form><p>
+                	<button name="client_login" ng-click="register(username,lastname,emailid,reemailid,password)">Register</button>
+            <button name="client_login" onclick="window.location.href='main1.html'">Back</button>
+<!--            <a href="main1.html" name="client_login">Back</a>-->
+                </p>
+        </div>
+    </div>
+</div>
+
+
+
+
+</center>
+</div>
+<!--<div class="loginbtn" style="position:absolute;left:600px;top:590px">
+<a href="main1.html" class="myButton">Back</a>
+</div>-->	
+
+<div style="position:absolute;left:550px;top:640px;color:brown" ng-hide="checked">
+    <h3>{{msg}}</h3>
+</div>
+
+	
+
+</body>
+
+</html>
+[
+
+	{"maxretweetcnt":191209,"text":"Great times, great people ! @CalvinHarris @Louis_Tomlinson @edsheeran @taylorswift13 @austinswift7 http://t.co/d0czgm3NVL"},
+	{"maxretweetcnt":100874,"text":"#JustinBieberFtBrunoMars is trending worldwide i see. yeah @BrunoMars it might be that time"},
+	{"maxretweetcnt":86777,"text":"I thought I was being called out. I missed the point, I misunderstood, then misspoke. I'm sorry, Nicki.\n@NICKIMINAJ"},
+	{"maxretweetcnt":77032,"text":"Please refer to @nickiminaj as Mrs. Aubrey Drake Graham and dont stare at her too long. She's finally mine. :)"},
+	{"maxretweetcnt":61900,"text":"@BrunoMars any way we do dis you gon' come up short"},
+	{"maxretweetcnt":48840,"text":"All the feels 2011-2015 ðŸ’œ @taylorswift13 http://t.co/DvtShwVJCA"},
+	{"maxretweetcnt":43915,"text":"Look who I got to see tonight!!!! â¤ï¸â¤ï¸â¤ï¸ you @taylorswift13 ðŸ‘¯ #VMAs2014 http://t.co/xYJ2cMbVNy"},
+	{"maxretweetcnt":42439,"text":"To Apple, Love Taylor \nhttp://t.co/GN9jiRkqlj"},
+	{"maxretweetcnt":41661,"text":"I'm not always confident.  Just tired. Black women influence pop culture so much but are rarely rewarded for it.  https://t.co/2xOvJzBXJX"},
+	{"maxretweetcnt":37205,"text":"VMA's were amazing! Heard a lot from @ddlovato about @SimonCowell @britneyspears @La_Reid. Gonna be fun"}
+][
+
+	{"singer":"rihanna","possibly_sensitive":true,"cnt":237},
+	{"singer":"taylorswift","possibly_sensitive":true,"cnt":127},
+	{"singer":"nickiminaj","possibly_sensitive":true,"cnt":98},
+	{"singer":"adele","possibly_sensitive":true,"cnt":93},
+	{"singer":"britneyspears","possibly_sensitive":true,"cnt":84},
+	{"singer":"katyperry","possibly_sensitive":true,"cnt":71},
+	{"singer":"selenagomez","possibly_sensitive":true,"cnt":61},
+	{"singer":"JLo","possibly_sensitive":true,"cnt":45},
+	{"singer":"mileycyrus","possibly_sensitive":true,"cnt":33},
+	{"singer":"brunomars","possibly_sensitive":true,"cnt":19},
+	{"singer":"ladygaga","possibly_sensitive":true,"cnt":17},
+	{"singer":"shakira","possibly_sensitive":true,"cnt":14},
+	{"singer":"justinbeiber","possibly_sensitive":true,"cnt":11},
+	{"singer":"justintimberlake","possibly_sensitive":true,"cnt":10},
+	{"singer":"eminem","possibly_sensitive":true,"cnt":4}
+]html, body, div, span,
+h1, h2, h3, h4, h5, h6, p, blockquote, pre,
+a, b, u, i, center,
+dl, dt, dd, ol, ul, li,
+fieldset, form, label, legend {
+	background: transparent;
+	border: 0;
+	margin: 0;
+	padding: 0;
+	vertical-align: baseline;
+	font-family:'Helvetica Neue', Helvetica, Arial, sans-serif;
+}
+body.login { background-image:url(images2.jpg)}
+h2 { font-size: 30px; line-height:38px; font-weight:normal; }
+.loginbox {
+	background: #FBFCFD;
+	padding: 10px;
+	width: 500px;
+	margin: 4% auto 0 auto;
+	position: absolute;
+	height: 100px;
+	left: 227px;
+	top: 142px;
+}
+.loginboxinner { 
+	background: #FBFCFD; padding: 5px; position: relative; border: 1px solid #FBFCFD;
+	-moz-box-shadow: inset 0 1px 0 #FBFCFD; -webkit-box-shadow: inset 0 1px 0 #FBFCFD; box-shadow: inset 0 1px 0 #FBFCFD;
+}
+.loginheader { height: 20px; }
+.loginform { margin: 4px auto; text-align:center; }
+
+.loginbox h1 { font-size: 30px; letter-spacing: 1px; color: #555; font-weight: normal; padding-top: 10px; }
+.loginbox p { margin: 7px 0 5px 0; }
+.loginbox label { display: block; color: #A09191; letter-spacing: 1px; font-size: 18px; }
+.loginbox input.mini { width:195px; }
+.loginbox input { 
+	padding: 12px 10px; color:#E10B0E; 
+	font-family: Arial, Helvetica, sans-serif; margin-top: 8px; font-size: 15px; border: 1px solid #ccc; width: 420px;  outline: none; 
+}
+.loginbox button { 
+	background: #0D0C0C; background-image:-webkit-linear-gradient(top, #4F67A4); padding: 10px 20px; font-size: 18px; border: 1px solid #1D3871; letter-spacing: 1px; color: #fff; width: 440px; line-height:30px; font-family:	'Helvetica Neue', Helvetica, Arial, sans-serif;
+	-moz-box-shadow: 1px 1px 3px #1D3871; -webkit-box-shadow: 1px 1px 3px #1D3871; box-shadow: 1px 1px 3px #1D3871; cursor: pointer;
+}
+
+.radius { -moz-border-radius: 5px; -webkit-border-radius: 5px; border-radius: 5px; }
+.radius1 { -moz-border-radius: 3px; -webkit-border-radius: 3px; border-radius: 3px; }
+.title { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; line-height:28px; font-weight:normal; text-align:center; font-size:16px; }
+
+
+@media screen and (max-width: 430px) {
+	
+	body { font-size: 11px; }
+	button, input, select, textarea { font-size: 11px; }
+	
+	.loginbox { width: auto; margin: 10px; }
+	.loginbox input { width: 95%; }
+	.loginbox button { width: 100%; }
+}	
+
+
+#facebook-Bar {
+	
+	border-bottom: 1px solid rgba(209,174,174,1.00);
+	box-shadow: 0 0 2px rgba(0, 0, 0, 0.52);
+	min-width: 1000px;
+	width: 100%;
+	z-index: 1000;
+}
+#facebook-Frame {
+	margin-left:auto;
+	margin-right:auto;
+	max-width:1000px;
+	height:100px;
+	display:block;
+}
+/*-------LOGO-----------*/
+#logo {
+	float: left;
+	height: 70px;
+	position: relative;
+	width: 160px;
+}
+#logo a {
+	position: absolute;
+	top: 20px;
+	font-size:23px; font-weight:bold; color:#4329AF;
+	text-decoration:none;
+	font-family:"Lucida Sans Unicode", "Lucida Grande", sans-serif;
+}
+
+/*-------Login-----------*/
+#header-main-right {
+	float: right;
+	height: 68px;
+	position: relative;
+	top:5px;
+}
+#header-main-right-nav {
+	background: #457DEC;
+	padding: 4px 6px 4px 4px;
+	position: absolute;
+	right: 12px;
+	top: 16px;
+}
+#login_form .inputtext {
+	background-color: #FFFFFF;
+	height:16px;
+	font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+	font-size: 13px;
+	margin: 0;
+	padding: 5px 8px 5px 8px;
+	width: 166px;
+	border:1px solid #3A518A;
+}
+#login_form .inputtext:hover {
+	border-color: #A0A0A0 #B9B9B9 #B9B9B9;
+	border-image: none;
+	border-style: solid;
+	border-width: 1px;
+	box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1) inset;
+}
+
+#login_form table tr td {
+	padding: 0 0 0 5px;
+}
+#login_form table tr td label {
+	color: #fff;
+	cursor: pointer;
+	font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+	font-size: 12px;
+	font-weight: normal;
+	padding-left: 1px;
+	text-align: left;
+	vertical-align: middle;
+}
+.fbbutton { border:1px; width:94px; background-image:-webkit-linear-gradient(top, #C70B17, #151212); font-size:14px; line-height:25px; font-weight:normal; color:#fff; }
+
+.textarea
+{
+	position:absolute;
+	top:90px;
+	left:250px;
+	
+}
+[
+
+	{"singer":"taylorswift","time_zone":"Pacific Time (US & Canada)","_c2":"Wed Nov 2","cnt":1976},
+	{"singer":"taylorswift","time_zone":"Eastern Time (US & Canada)","_c2":"Wed Nov 2","cnt":847},
+	{"singer":"taylorswift","time_zone":"Central Time (US & Canada)","_c2":"Wed Nov 2","cnt":523},
+	{"singer":"taylorswift","time_zone":"Brasilia","_c2":"Wed Nov 2","cnt":368},
+	{"singer":"taylorswift","time_zone":"Sydney","_c2":"Wed Nov 2","cnt":358},
+	{"singer":"taylorswift","time_zone":"Pacific Time (US & Canada)","_c2":"Thu Nov 2","cnt":316},
+	{"singer":"taylorswift","time_zone":"Beijing","_c2":"Wed Nov 2","cnt":259},
+	{"singer":"taylorswift","time_zone":"Atlantic Time (Canada)","_c2":"Wed Nov 2","cnt":248},
+	{"singer":"taylorswift","time_zone":"Jakarta","_c2":"Wed Nov 2","cnt":247},
+	{"singer":"taylorswift","time_zone":"London","_c2":"Wed Nov 2","cnt":229}
+
+][
+	{"time_zone":"Canada","_c1":"Wed Nov 2","total_count":9595},
+	{"time_zone":"Australia","_c1":"Wed Nov 2","total_count":5965},
+	{"time_zone":"France","_c1":"Wed Nov 2","total_count":4080},
+	{"time_zone":"Brasilia","_c1":"Wed Nov 2","total_count":3034},
+	{"time_zone":"Netherlands","_c1":"Wed Nov 2","total_count":2117},
+	{"time_zone":"united kingdom","_c1":"Wed Nov 2","total_count":2013},
+	{"time_zone":"Mexico","_c1":"Wed Nov 2","total_count":1975},
+	{"time_zone":"Greece","_c1":"Wed Nov 2","total_count":1502},
+	{"time_zone":"Quito","_c1":"Wed Nov 2","total_count":1310},
+	{"time_zone":"Spain","_c1":"Wed Nov 2","total_count":1301},
+	{"time_zone":"Denmark","_c1":"Thu Nov 2","total_count":1201},
+	{"time_zone":"Belgium","_c1":"Wed Nov 2","total_count":954},
+	{"time_zone":"Hawaii-Aleutian Daylight Time","_c1":"Wed Nov 2","total_count":903},
+	{"time_zone":"Argentina","_c1":"Wed Nov 2","total_count":894},
+	{"time_zone":"Mountain Time (US & Canada)","_c1":"Wed Nov 2","total_count":871}
+][
+	{"text":"RT @justinbieber: My apologies to @colbertlateshow as I won't be able to make it to nyc tomorrow for the show. I look forward to making it …","cnt":4137},
+	{"text":"RT @MTVMusicUK: #ICYMI: @onedirection are #1 in #MTVStars followed by @ladygaga @5sos &amp; @britneyspears &gt;&gt; https://t.co/1hbb1gB5GH https://t…","cnt":1804},
+	{"text":"RT @TheEllenShow: Gavin told me he wanted to meet @BritneySpears. Done. https://t.co/mTFQbrBTcN","cnt":727},
+	{"text":"RT @billboard: Congrats to @TaylorSwift13: \"Wildest Dreams\" is her first-ever Dance/Mix Show Airplay No. 1! https://t.co/5WYhdQrARI https:/…","cnt":681},
+	{"text":"RT @ABC10: Good luck @JustinBieber on @TheAMAs performance! #ABC10 is offering fans a chance to see #JustinBieber. Please RT. https://t.co/…","cnt":581},
+	{"text":"RT @WORLDMUSICAWARD: #JustinBieber's #purpose is No.1 in the US with @onedirection's #MadeInTheAM close behind!\nhttps://t.co/qPpF8WUPyO htt…","cnt":554}
+
+
+]<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" data-ng-app="myApp">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<title>User Home Page</title>
+<link rel="stylesheet" href="style.css" type="text/css" />
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.4.4/angular.min.js" type="application/javascript"></script>  
+  <script src="js/app.js"></script>
+<style>
+.button {
+        border: 1px solid #7d868c;
+        background: #161717;
+        background: -webkit-gradient(linear, left top, left bottom, from(#ffffff), to(#161717));
+        background: -webkit-linear-gradient(top, #ffffff, #161717);
+        background: -moz-linear-gradient(top, #ffffff, #161717);
+        background: -ms-linear-gradient(top, #ffffff, #161717);
+        background: -o-linear-gradient(top, #ffffff, #161717);
+        background-image: -ms-linear-gradient(top, #ffffff 0%, #161717 100%);
+        padding: 14px 28px;
+        -webkit-border-radius: 7px;
+        -moz-border-radius: 7px;
+        border-radius: 7px;
+        -webkit-box-shadow: rgba(255,255,255,0.4) 0 1px 0, inset rgba(255,255,255,0.4) 0 1px 0;
+        -moz-box-shadow: rgba(255,255,255,0.4) 0 1px 0, inset rgba(255,255,255,0.4) 0 1px 0;
+        box-shadow: rgba(255,255,255,0.4) 0 1px 0, inset rgba(255,255,255,0.4) 0 1px 0;
+        text-shadow: #0d0d0d 0 1px 0;
+        color: #ededed;
+        font-size: 16px;
+        font-family: helvetica, serif;
+        text-decoration: none;
+        vertical-align: middle;
+		position:absolute;
+		top:150px;
+		left:10px;
+      }
+      .button:hover {
+        border: 1px solid #0a3c59;
+        text-shadow: #1e4158 0 1px 0;
+        background: #3e779d;
+        background: -webkit-gradient(linear, left top, left bottom, from(#f2faff), to(#3e779d));
+        background: -webkit-linear-gradient(top, #f2faff, #3e779d);
+        background: -moz-linear-gradient(top, #f2faff, #3e779d);
+        background: -ms-linear-gradient(top, #f2faff, #3e779d);
+        background: -o-linear-gradient(top, #f2faff, #3e779d);
+        background-image: -ms-linear-gradient(top, #f2faff 0%, #3e779d 100%);
+        color: #fff;
+      }
+      .button:active {
+        text-shadow: #1e4158 0 1px 0;
+        border: 1px solid #0a3c59;
+        background: #65a9d7;
+        background: -webkit-gradient(linear, left top, left bottom, from(#3e779d), to(#3e779d));
+        background: -webkit-linear-gradient(top, #3e779d, #65a9d7);
+        background: -moz-linear-gradient(top, #3e779d, #65a9d7);
+        background: -ms-linear-gradient(top, #3e779d, #65a9d7);
+        background: -o-linear-gradient(top, #3e779d, #65a9d7);
+        background-image: -ms-linear-gradient(top, #3e779d 0%, #65a9d7 100%);
+        color: #fff;
+      }
+	  
+	
+	
+</style>
+<link href="css/bootstrap.css" rel="stylesheet" type="text/css" />
+
+</head>
+<body style="background-image:url(images/twt.png) " ng-controller="RegisterController">
+<center><b><h1></h1></b></center><br><br><br><br><br><br>
+
+<center>
+
+    
+    </center>
+<div class="btn-group-vertical" role="group" aria-label="Vertical button group" style="position:absolute;left:340px;top:220px">
+    
+
+</div>
+    
+<script src="js/jquery-1.11.2.min.js" type="text/javascript"></script>
+<script src="js/bootstrap.js" type="text/javascript"></script>
+</body>
+
+  </html>
+  .....................................................................*******************......................................................
